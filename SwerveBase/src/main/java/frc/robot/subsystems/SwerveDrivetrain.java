@@ -7,7 +7,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class SwerveDrivetrain extends SubsystemBase {
+public class SwerveDrivetrain extends SubsystemBase implements SwerveIO{
   /** Creates a new ExampleSubsystem. */
   public SwerveDrivetrain() {}
 
