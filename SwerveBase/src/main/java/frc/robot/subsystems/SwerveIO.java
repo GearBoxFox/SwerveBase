@@ -19,7 +19,7 @@ public interface SwerveIO {
         /**update the drivetrains inputs */
     }
 
-    public default void setModuleState(double xTranslation, double yTranslation, double zRotation){
+    public default void setModuleState(double xTranslation, double yTranslation, double zRotation, boolean fieldRelative){
         /**Update module states based on driver inpuy */
     }
 }
