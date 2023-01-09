@@ -37,26 +37,14 @@ public final class Constants {
     new Translation2d(-kWheelBase / 2, kTrackWidth / 2),
     new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
-    public static final double kMod0Offset = 0.0;
-    public static final double kMod1Offset = 0.0;
-    public static final double kMod2Offset = 0.0;
-    public static final double kMod3Offset = 0.0;
+    public static final double kModFrOffset = 341.279;
+    public static final double kModFlOffset = 32.871;
+    public static final double kModBlOffset = 288.281;
+    public static final double kModBrOffset = 274.482;
 
     public static final int[] kMod0Cans = {3, 4, 5};
     public static final int[] kMod1Cans = {6, 7, 8};
     public static final int[] kMod2Cans = {9, 10, 11};
     public static final int[] kMod3Cans = {12, 13, 14};
-    
-  public static final Mode currentMode = Mode.REAL;
 
-  public static enum Mode {
-    /** Running on a real robot. */
-    REAL,
-
-    /** Running a physics simulator. */
-    SIM,
-
-    /** Replaying from a log file. */
-    REPLAY
-  }
 }

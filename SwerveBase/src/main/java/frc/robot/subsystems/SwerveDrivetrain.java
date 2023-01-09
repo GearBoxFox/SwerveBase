@@ -12,30 +12,32 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
-public class SwerveDrivetrain extends SubsystemBase implements SwerveIO{
+public class SwerveDrivetrain extends SubsystemBase{
   private SwerveModuleFalcon frModule;
   private SwerveModuleFalcon flModule;
   private SwerveModuleFalcon brModule;
   private SwerveModuleFalcon blModule;
   private PigeonIMU gyro;
+  private int counter;
 
   private SwerveDriveOdometry odometry;
   /** Creates a new ExampleSubsystem. */
   public SwerveDrivetrain() {
-    frModule = new SwerveModuleFalcon(0, Constants.kMod0Offset, Constants.kMod0Cans);
-    flModule = new SwerveModuleFalcon(1, Constants.kMod1Offset, Constants.kMod1Cans);
-    brModule = new SwerveModuleFalcon(2, Constants.kMod2Offset, Constants.kMod2Cans);
-    blModule = new SwerveModuleFalcon(3, Constants.kMod3Offset, Constants.kMod3Cans);
+    frModule = new SwerveModuleFalcon(0, Constants.kModFrOffset, Constants.kMod0Cans);
+    flModule = new SwerveModuleFalcon(1, Constants.kModFlOffset, Constants.kMod1Cans);
+    brModule = new SwerveModuleFalcon(2, Constants.kModBrOffset, Constants.kMod2Cans);
+    blModule = new SwerveModuleFalcon(3, Constants.kModBlOffset, Constants.kMod3Cans);
 
     gyro = new PigeonIMU(15);
     odometry = new SwerveDriveOdometry(Constants.kDriveKinematics, getGyro(), getModulePositions());
+    counter = 0;
   }
 
-  @Override
   public void setModuleState(double xTranslation, double yTranslation, double zRotation, boolean fieldRelative){
     //Converts controller inputs to working chassis speeds, to working swerve module state array
     SwerveModuleState[] swerveModuleStates = Constants.kDriveKinematics.toSwerveModuleStates( 
@@ -55,26 +57,24 @@ public class SwerveDrivetrain extends SubsystemBase implements SwerveIO{
       flModule.setDesiredState(swerveModuleStates[1]);
       blModule.setDesiredState(swerveModuleStates[2]);
       brModule.setDesiredState(swerveModuleStates[3]);
-  }
 
-  @Override
-  public void updateInputs(SwerveIOInput inputs){
-    //Updates modules states for AdvantageKit logging
-    inputs.frState = frModule.getState();
-    inputs.flState = flModule.getState();
-    inputs.brState = brModule.getState();
-    inputs.blState = blModule.getState();
-    
-    //Update gyro for logging
-    inputs.gyroYaw = getGyro().getDegrees();
+      //Counter + logic for resetting to absolute
+      counter++;
+      if(counter == 200){
+        setAbsoluteAngles();
+        counter = 0;
+      }
   }
 
   public Rotation2d getGyro(){
     return Rotation2d.fromDegrees(gyro.getYaw());
   }
 
-  private SwerveModulePosition[] getModulePositions(){
-    SwerveModulePosition[] modulePos = {new SwerveModulePosition()};
+  public SwerveModulePosition[] getModulePositions(){
+    SwerveModulePosition[] modulePos = {new SwerveModulePosition(), 
+      new SwerveModulePosition(), 
+      new SwerveModulePosition(), 
+      new SwerveModulePosition()};
 
     modulePos[0] = frModule.getPosition();
     modulePos[1] = flModule.getPosition();
@@ -82,6 +82,13 @@ public class SwerveDrivetrain extends SubsystemBase implements SwerveIO{
     modulePos[3] = blModule.getPosition();
 
     return modulePos;
+  }
+
+  public void setAbsoluteAngles(){
+    frModule.resetToAbsolute();
+    flModule.resetToAbsolute();
+    blModule.resetToAbsolute();
+    brModule.resetToAbsolute();
   }
 
   /**
@@ -112,6 +119,16 @@ public class SwerveDrivetrain extends SubsystemBase implements SwerveIO{
   public void periodic() {
     // This method will be called once per scheduler run
     odometry.update(getGyro(), getModulePositions());
+
+    SmartDashboard.putNumber("Fr Azimuth", frModule.getAzimuthAngle());
+    SmartDashboard.putNumber("Fl Azimuth", flModule.getAzimuthAngle());
+    SmartDashboard.putNumber("Br Azimuth", brModule.getAzimuthAngle());
+    SmartDashboard.putNumber("Bl Azimuth", blModule.getAzimuthAngle());
+
+    SmartDashboard.putNumber("Fr Setpoint", frModule.getTargetAngle());
+    SmartDashboard.putNumber("Fl Setpoint", flModule.getTargetAngle());
+    SmartDashboard.putNumber("Br Setpoint", brModule.getTargetAngle());
+    SmartDashboard.putNumber("Bl Setpoint", blModule.getTargetAngle());
   }
 
   @Override

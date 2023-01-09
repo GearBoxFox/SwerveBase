@@ -5,10 +5,11 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.MagnetFieldStrength;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants;
@@ -37,11 +38,17 @@ public class SwerveModuleFalcon {
         driveFx.setNeutralMode(NeutralMode.Brake);
         driveFx.configOpenloopRamp(0.75);
 
+        kP = 0.16;
+        kI = 0.00;
+        kD = 0;
+
+        azimuthFx.configFactoryDefault();
         azimuthFx.config_kP(0, kP);
         azimuthFx.config_kI(0, kI);
         azimuthFx.config_kD(0, kD);
         azimuthFx.setNeutralMode(NeutralMode.Brake);
         azimuthFx.setInverted(true);
+        azimuthFx.configIntegratedSensorInitializationStrategy(SensorInitializationStrategy.BootToZero);
         resetToAbsolute();
 
         encoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
@@ -52,18 +59,19 @@ public class SwerveModuleFalcon {
 
     public void setDesiredState(SwerveModuleState state){
         SwerveModuleState desiredState = CTREModuleState.optimize(state, getState().angle);
+        // SwerveModuleState desiredState = state; //SwerveModuleState.optimize(state, getCanCoder());
 
         double percentOutput = desiredState.speedMetersPerSecond / 3.0; //This is swerve max speed , figure ths out
         driveFx.set(ControlMode.PercentOutput, percentOutput);
 
         double angle = (Math.abs(desiredState.speedMetersPerSecond) <= (3.0 * 0.01)) ? lastAngle : desiredState.angle.getDegrees(); //Prevent rotating module if speed is less then 1%. Prevents Jittering.
-        azimuthFx.set(ControlMode.Position, Conversions.degreesToFalcon(angle, 21.2)); 
+        azimuthFx.set(ControlMode.Position, Conversions.degreesToFalcon(angle, Constants.kTurningRatio)); 
         lastAngle = angle;
     }
 
     public SwerveModuleState getState() {
-        double velocity = Conversions.falconToMPS(driveFx.getSelectedSensorVelocity(), 1.5, 21.2);
-        Rotation2d angle = Rotation2d.fromDegrees(Conversions.falconToDegrees(azimuthFx.getSelectedSensorPosition(), 21.2));
+        double velocity = Conversions.falconToMPS(driveFx.getSelectedSensorVelocity(), Constants.kWheelCircumfrance, Constants.kDriveGearRation);
+        Rotation2d angle = Rotation2d.fromDegrees(Conversions.falconToDegrees(azimuthFx.getSelectedSensorPosition(), Constants.kTurningRatio));
         return new SwerveModuleState(velocity, angle);
     }
 
@@ -73,12 +81,16 @@ public class SwerveModuleFalcon {
     }
 
     public void resetToAbsolute(){
-        double absolutePosition = Conversions.degreesToFalcon(getCanCoder().getDegrees() - magnetOffset, 21.2);
+        double absolutePosition = Conversions.degreesToFalcon(getCanCoder().getDegrees() - magnetOffset, Constants.kTurningRatio);
         azimuthFx.setSelectedSensorPosition(absolutePosition);  
     }
 
     public Rotation2d getCanCoder(){
         return Rotation2d.fromDegrees(encoder.getAbsolutePosition());
+    }
+
+    public double getAzimuthAngle(){
+        return Conversions.falconToDegrees(azimuthFx.getSelectedSensorPosition(), Constants.kTurningRatio);
     }
 
     public double getTargetAngle() {
