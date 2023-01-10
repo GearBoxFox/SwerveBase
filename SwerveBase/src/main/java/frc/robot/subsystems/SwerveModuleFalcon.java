@@ -24,6 +24,9 @@ public class SwerveModuleFalcon {
     private double kI;
     private double kD;
 
+    // private double cruiseVelocity = 4000.0;
+    // private double maxAcceleration = 4000.0;
+
     public int moduleNumber;
     public double magnetOffset;
 
@@ -47,25 +50,36 @@ public class SwerveModuleFalcon {
         azimuthFx.config_kI(0, kI);
         azimuthFx.config_kD(0, kD);
         azimuthFx.setNeutralMode(NeutralMode.Brake);
-        azimuthFx.setInverted(true);
+        azimuthFx.setInverted(false);
+        azimuthFx.setSensorPhase(false);
         azimuthFx.configIntegratedSensorInitializationStrategy(SensorInitializationStrategy.BootToZero);
-        resetToAbsolute();
-
+        
+        encoder.configFactoryDefault();
         encoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
         encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
         encoder.configSensorDirection(true);
         encoder.configMagnetOffset(magnetOffset);
+        
+        resetToAbsolute();
     }
 
     public void setDesiredState(SwerveModuleState state){
-        SwerveModuleState desiredState = CTREModuleState.optimize(state, getState().angle);
+        SwerveModuleState desiredState = CTREModuleState.optimize(state, Rotation2d.fromDegrees(getAzimuthAngle()));
         // SwerveModuleState desiredState = state; //SwerveModuleState.optimize(state, getCanCoder());
 
-        double percentOutput = desiredState.speedMetersPerSecond / 3.0; //This is swerve max speed , figure ths out
-        driveFx.set(ControlMode.PercentOutput, percentOutput);
+        double percentOutput = desiredState.speedMetersPerSecond / 1.0 * 0.2; //This is swerve max speed , figure ths out
+        
 
-        double angle = (Math.abs(desiredState.speedMetersPerSecond) <= (3.0 * 0.01)) ? lastAngle : desiredState.angle.getDegrees(); //Prevent rotating module if speed is less then 1%. Prevents Jittering.
-        azimuthFx.set(ControlMode.Position, Conversions.degreesToFalcon(angle, Constants.kTurningRatio)); 
+        double angle = Conversions.degreesToFalcon(desiredState.angle.getDegrees(), Constants.kTurningRatio); 
+
+        if(desiredState.speedMetersPerSecond <= 0.1){
+            resetToAbsolute();
+        }
+
+        if(desiredState.speedMetersPerSecond > 0.1){        
+            azimuthFx.set(ControlMode.Position, angle); 
+            driveFx.set(ControlMode.PercentOutput, percentOutput);
+        }
         lastAngle = angle;
     }
 
@@ -81,7 +95,7 @@ public class SwerveModuleFalcon {
     }
 
     public void resetToAbsolute(){
-        double absolutePosition = Conversions.degreesToFalcon(getCanCoder().getDegrees() - magnetOffset, Constants.kTurningRatio);
+        double absolutePosition = Conversions.degreesToFalcon(encoder.getAbsolutePosition(), Constants.kTurningRatio);
         azimuthFx.setSelectedSensorPosition(absolutePosition);  
     }
 
