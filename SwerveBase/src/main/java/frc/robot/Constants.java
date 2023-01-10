@@ -37,10 +37,10 @@ public final class Constants {
     new Translation2d(-kWheelBase / 2, kTrackWidth / 2),
     new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
-    public static final double kModFrOffset = 341.279;
-    public static final double kModFlOffset = 32.871;
-    public static final double kModBlOffset = 288.281;
-    public static final double kModBrOffset = 274.482;
+    public static final double kModFrOffset = 160.400;//360 - 160.400;
+    public static final double kModFlOffset = 215.508;//360 - 215.508;
+    public static final double kModBlOffset = 105.820;//360 - 105.820;
+    public static final double kModBrOffset = 97.119;//360 - 97.119;
 
     public static final int[] kMod0Cans = {3, 4, 5};
     public static final int[] kMod1Cans = {6, 7, 8};

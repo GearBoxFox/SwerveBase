@@ -29,6 +29,7 @@ public class SwerveModuleFalcon {
 
     public int moduleNumber;
     public double magnetOffset;
+    private int count = 0;
 
     public SwerveModuleFalcon(int moduleNumber, double magnetOffset, int[] canIds){
         this.magnetOffset = magnetOffset;
@@ -43,7 +44,7 @@ public class SwerveModuleFalcon {
 
         kP = 0.16;
         kI = 0.00;
-        kD = 0;
+        kD = 3;
 
         azimuthFx.configFactoryDefault();
         azimuthFx.config_kP(0, kP);
@@ -72,14 +73,14 @@ public class SwerveModuleFalcon {
 
         double angle = Conversions.degreesToFalcon(desiredState.angle.getDegrees(), Constants.kTurningRatio); 
 
-        if(desiredState.speedMetersPerSecond <= 0.1){
+        if(desiredState.speedMetersPerSecond <= 0.1 && count == 200){
             resetToAbsolute();
         }
 
         if(desiredState.speedMetersPerSecond > 0.1){        
             azimuthFx.set(ControlMode.Position, angle); 
-            driveFx.set(ControlMode.PercentOutput, percentOutput);
         }
+        driveFx.set(ControlMode.PercentOutput, percentOutput);
         lastAngle = angle;
     }
 
